@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <script src="js/d3.tip.js"></script>
+
+</head>
+<style>
+
+
+.fond-stras{
+  fill:#cbcfcf;
+}
+
+.d3-tip {
+  line-height: 1.5;
+  font-weight: normal;
+  font-family: Arial;
+  padding: 5px;
+  background: rgba(125, 125, 125, 0.8);
+  color: white;
+  border-radius: 4px;
+  font-size: 11px!important;
+
+}
+
+.t_bureau{
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.bureau{
+  opacity:1;
+  stroke-width:1px;
+  stroke:white;
+}
+
+.bureau:hover{
+  stroke:#b0b0b0;
+}
+
+#container{
+  width:500px;
+  height:900px;
+  position: absolute;
+}
+
+#carte{
+  width:360px;
+  height: 600px;
+  margin-left: 140px;
+  margin-top:-30px;
+  position: absolute;
+}
+
+#graphe{
+  width:140px;
+  height: 500px;
+  margin-left:0px;
+  margin-top:30px;
+  position: absolute;
+}
+
+#legende{
+    margin-top:560px;
+    position:absolute;
+    width: 500px;
+}
+
+#source{
+  position: absolute;
+  margin-top: 705px;
+  width: 500px;
+margin-left: 30px;
+font-family: Arial;
+font-size: 0.8em;
+}
+
+h1{
+  font-family: Arial;
+  font-size: 1.2em;
+  width: 500px;
+  margin-left: auto;
+  text-align:center;
+}
+
+.bar_k {
+    fill: #4176e8; 
+}
+
+
+
+
+.axis text {
+
+    font: 8px sans-serif;
+
+}
+
+.axis path, .axis line {
+
+    fill: none;
+
+    stroke: #000;
+
+    shape-rendering: crispEdges;
+
+}
+
+</style>
+<body>
+
+<div id="container">
+  <h1>La chute de Roland Ries dans ses bastions de 2008 </br>profite assez peu à Fabienne Keller</h1>
+  <div id="graphe"></div><div id="carte"></div>
+  <div id="legende"></div>
+   <div id="source">Source : <a href="http://www.strasbourg.eu/fr/ma-situation/professionnel/open-data/donnees/citoyennete-democratie-open-data" target="_blank">Communauté urbaine de Strasbourg</a></div>
+
+</div>
+
+
+<script>
+
+//on commence par déclarer un tableau qui suit le même ordre que notre .csv. Contrairement à ce dernier, il est prévu de le trier pour avoir un histogramme harmonieux
+
+var tableau=[{"id_bureau":905,"diff_keller":4.05,"diff_ries":-15.02},
+{"id_bureau":107,"diff_keller":8.72,"diff_ries":-14.67},
+{"id_bureau":207,"diff_keller":4.47,"diff_ries":-15.9},
+{"id_bureau":707,"diff_keller":8.8,"diff_ries":-18.59},
+{"id_bureau":1001,"diff_keller":12.04,"diff_ries":-17.21},
+{"id_bureau":1004,"diff_keller":5.27,"diff_ries":-19.07},
+{"id_bureau":601,"diff_keller":9.4,"diff_ries":-17.33},
+{"id_bureau":908,"diff_keller":2.98,"diff_ries":-12.73},
+{"id_bureau":620,"diff_keller":-2.11,"diff_ries":-8.95},
+{"id_bureau":103,"diff_keller":5.57,"diff_ries":-9.28},
+{"id_bureau":916,"diff_keller":6.22,"diff_ries":-15.5},
+{"id_bureau":714,"diff_keller":1.73,"diff_ries":-16.31},
+{"id_bureau":106,"diff_keller":2.73,"diff_ries":-6.22},
+{"id_bureau":305,"diff_keller":7.02,"diff_ries":-11.53},
+{"id_bureau":203,"diff_keller":3.89,"diff_ries":-8.88},
+{"id_bureau":306,"diff_keller":3.37,"diff_ries":-8.03},
+{"id_bureau":110,"diff_keller":10.74,"diff_ries":-13.2},
+{"id_bureau":105,"diff_keller":5.62,"diff_ries":-10.78},
+{"id_bureau":301,"diff_keller":5.41,"diff_ries":-9.43},
+{"id_bureau":108,"diff_keller":2.03,"diff_ries":-6.02},
+{"id_bureau":409,"diff_keller":4.12,"diff_ries":-8.97},
+{"id_bureau":307,"diff_keller":4,"diff_ries":-10.09},
+{"id_bureau":310,"diff_keller":4.47,"diff_ries":-12.84},
+{"id_bureau":810,"diff_keller":6.38,"diff_ries":-10.65},
+{"id_bureau":1003,"diff_keller":-1.63,"diff_ries":-13.09},
+{"id_bureau":812,"diff_keller":5.42,"diff_ries":-18.01},
+{"id_bureau":801,"diff_keller":3.91,"diff_ries":-11.77},
+{"id_bureau":703,"diff_keller":-4.85,"diff_ries":-1.34},
+{"id_bureau":205,"diff_keller":4.29,"diff_ries":-8.02},
+{"id_bureau":201,"diff_keller":5.98,"diff_ries":-8.86},
+{"id_bureau":814,"diff_keller":2.66,"diff_ries":-8.91},
+{"id_bureau":202,"diff_keller":7.86,"diff_ries":-14.11},
+{"id_bureau":204,"diff_keller":6.06,"diff_ries":-10.53},
+{"id_bureau":603,"diff_keller":7.19,"diff_ries":-15.12},
+{"id_bureau":506,"diff_keller":13.97,"diff_ries":-26.73},
+{"id_bureau":508,"diff_keller":-1.03,"diff_ries":-17.28},
+{"id_bureau":911,"diff_keller":-1.16,"diff_ries":-16.17},
+{"id_bureau":1005,"diff_keller":-1.96,"diff_ries":-6.5},
+{"id_bureau":910,"diff_keller":12.97,"diff_ries":-21.4},
+{"id_bureau":914,"diff_keller":3.69,"diff_ries":-23.1},
+{"id_bureau":618,"diff_keller":7.9,"diff_ries":-14.4},
+{"id_bureau":614,"diff_keller":12.82,"diff_ries":-22.21},
+{"id_bureau":615,"diff_keller":7.73,"diff_ries":-15.81},
+{"id_bureau":612,"diff_keller":7.71,"diff_ries":-16.1},
+{"id_bureau":611,"diff_keller":4.72,"diff_ries":-9.46},
+{"id_bureau":607,"diff_keller":2.56,"diff_ries":-10.28},
+{"id_bureau":616,"diff_keller":-1.5,"diff_ries":-13.97},
+{"id_bureau":906,"diff_keller":5.12,"diff_ries":-25},
+{"id_bureau":907,"diff_keller":1.57,"diff_ries":-15.91},
+{"id_bureau":621,"diff_keller":2.3,"diff_ries":-14.56},
+{"id_bureau":805,"diff_keller":4.86,"diff_ries":-12.51},
+{"id_bureau":304,"diff_keller":3.9,"diff_ries":-17},
+{"id_bureau":302,"diff_keller":3.05,"diff_ries":-13.46},
+{"id_bureau":602,"diff_keller":-0.84,"diff_ries":-6.07},
+{"id_bureau":1011,"diff_keller":2.81,"diff_ries":-17.91},
+{"id_bureau":604,"diff_keller":15.79,"diff_ries":-26.65},
+{"id_bureau":407,"diff_keller":-1.67,"diff_ries":-2.77},
+{"id_bureau":1002,"diff_keller":-0.56,"diff_ries":-11.47},
+{"id_bureau":704,"diff_keller":3.01,"diff_ries":-10.37},
+{"id_bureau":902,"diff_keller":-0.52,"diff_ries":-14.62},
+{"id_bureau":210,"diff_keller":4.06,"diff_ries":-7.95},
+{"id_bureau":206,"diff_keller":5.89,"diff_ries":-13.98},
+{"id_bureau":101,"diff_keller":5.24,"diff_ries":-8.9},
+{"id_bureau":209,"diff_keller":6.47,"diff_ries":-11.33},
+{"id_bureau":208,"diff_keller":4.39,"diff_ries":-11.75},
+{"id_bureau":102,"diff_keller":3.11,"diff_ries":-4.95},
+{"id_bureau":411,"diff_keller":9.5,"diff_ries":-16.23},
+{"id_bureau":109,"diff_keller":8.8,"diff_ries":-12.12},
+{"id_bureau":405,"diff_keller":0.01,"diff_ries":-3.87},
+{"id_bureau":406,"diff_keller":0.01,"diff_ries":-6.92},
+{"id_bureau":303,"diff_keller":6.94,"diff_ries":-17.59},
+{"id_bureau":309,"diff_keller":5.44,"diff_ries":-12.37},
+{"id_bureau":308,"diff_keller":7.34,"diff_ries":-12.32},
+{"id_bureau":613,"diff_keller":-2.51,"diff_ries":-8.18},
+{"id_bureau":115,"diff_keller":6.73,"diff_ries":-8.91},
+{"id_bureau":312,"diff_keller":3.94,"diff_ries":-9.26},
+{"id_bureau":909,"diff_keller":7.53,"diff_ries":-22.36},
+{"id_bureau":811,"diff_keller":1.47,"diff_ries":-12.52}];
+
+
+
+// on déclare trois fonctions qui range les deux paramètres de l'histogramme à gauche, à droite, ainsi qu'une fonction de tri
+
+function leftBound(node) {
+    return d3.max([node.diff_keller,-node.diff_ries])
+}
+
+function rightBound(node) {
+    return d3.max([node.diff_ries,-node.diff_keller])
+}
+dataSort = function(a,b) {
+    res = d3.descending(leftBound(a),leftBound(b))
+    if(res==0) {
+        return d3.descending(rightBound(a),rightBound(b))
+    } else {
+        return res
+    }
+}
+
+tableau = tableau.sort(dataSort);
+
+// on déclare les largeurs, hauteurs et marges de la carte, de l'histogramme et de la légende
+
+var width = 360,
+    height = 600;
+
+var margin = {
+    top: 15,
+    right: 5,
+    bottom: 5,
+    left: 5
+};
+
+var width2 = 140 - margin.left - margin.right,
+    height2 = 490 - margin.top - margin.bottom;
+
+var width3=500,
+    height3=150;
+
+// on passe ensuite à l'incontournable projection et au tableau de couleurs qui serviront plus tard pour la carte et la légende
+
+var proj = d3.geo.mercator()
+  .center([7.76, 48.57])
+    .scale(130000)
+    .translate([width / 2, height / 2]);
+
+var couleurs = ['#b30000','#e34a33','#fc8d59','#fdbb84','#fdd49e','#fef0d9'];
+
+var path = d3.geo.path()
+    .projection(proj);
+
+// on définit trois variables sgv qui correspondent aux div "carte", "graphe" et "légende"
+
+var svg = d3.select("#carte").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var svg2 = d3.select("#graphe").append("svg")
+    .attr("width", width2 + margin.left + margin.right)
+    .attr("height", height2+ margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");;
+
+var svg3 = d3.select("#legende").append("svg")
+    .attr("width", width3)
+    .attr("height", height3);
+
+// puis on passe aux axes de l'histogramme
+
+var x = d3.scale.linear()
+    .range([0, width2])
+
+var y = d3.scale.ordinal()
+    .rangeRoundBands([0, height2], .2);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("top");
+
+// on charge ensuite le fond de carte, les contours des bureaux de vote et les données grâce à la commande queue()
+
+queue()
+    .defer(d3.json,"strasbourg.json")
+    .defer(d3.json, "chute_ries.json")
+    .defer(d3.csv, "progression_riesk.csv")
+    .await(ready);
+
+function ready(error,stras,bureaux,progression) {
+
+// on entame les festivités avec notre fond de carte
+  
+  svg.append("path")
+    .data(topojson.feature(stras, stras.objects.contour).features)
+      .attr("class", "fond-stras")
+      .attr("d", path);
+
+// place ensuite à la légende qui s'affichera au survol sur les bureaux de vote. On y a ajouté un test 'if' pour bien distinguer recul et progression
+
+  var tip = d3.tip()
+      .attr('class', 'd3-tip')
+      .offset([-10, 0])
+      .html(function(d,i) {
+        nom_bureau = progression[i].nom_bureau
+        riesp2014 = progression[i].ries_2014_p
+        diffr=progression[i].diff_ries
+        kellerp2014 = progression[i].keller_2014_p
+        diffk=progression[i].diff_keller
+        if (diffk<0) {return "<span class='t_bureau'>"+nom_bureau+"</span><br/>En 2014<hr/><u>Ries</u> : <b>"+riesp2014+"%</b>, soit un <b>recul de "+-diffr+"%</b> par rapport à 2008<br/>"+"<u>Keller</u> : <b>"+kellerp2014+"%</b>, soit un <b>recul de "+-diffk+"%</b> par rapport à 2008"}
+          else {
+        return "<span class='t_bureau'>"+nom_bureau+"</span><br/>En 2014<hr/><u>Ries</u> : <b>"+riesp2014+"%</b>, soit un <b>recul de "+-diffr+"%</b> par rapport à 2008<br/>"+"<u>Keller</u> : <b>"+kellerp2014+"%</b>, soit une <b>progression de "+diffk+"%</b> par rapport à 2008"}
+      })
+      svg.call(tip);
+
+// on s'occupe maintenant de l'histogramme
+
+  svg2.append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+x.domain([-30,20])
+
+y.domain(tableau.map(function (d) {
+    return d.id_bureau;
+}));
+
+// on attribue une classe 'bar' commune qui permettra de surligner chaqque ligne de l'histogramme (==> barre gauche et droite)
+
+svg2.selectAll(".bar_j")
+    .data(tableau)   
+    .enter().append("rect")
+    .attr("class", "bar bar_j")
+    .attr("fill", function(d,i){
+
+// cette formule de coloriage sera strictement la même pour la carte
+              if (tableau[i].diff_ries<-17.59){
+            return couleurs[0]
+          }
+          else if (tableau[i].diff_ries<-15.02){
+            return couleurs[1]
+          }
+           else if (tableau[i].diff_ries<-12.52){
+            return couleurs[2]
+          }
+          else if (tableau[i].diff_ries<-10.37){
+            return couleurs[3]
+          }
+          else if (tableau[i].diff_ries<-8.86){
+            return couleurs[4]
+          }
+          else {return couleurs[5]
+          }
+        })
+    .attr("x", function (d) {
+    return x(Math.min(0, d.diff_ries));
+})
+    .attr("y", function (d) {
+    return y(d.id_bureau);
+})
+    .attr("width", function (d) {
+    return Math.abs(x(d.diff_ries) - x(0));
+})
+    .attr("height", y.rangeBand());
+
+svg2.selectAll(".bar_k")
+    .data(tableau)
+    .enter().append("rect")
+    .attr("class", "bar bar_k")
+    .attr("x", function (d) {
+    return x(Math.min(0, d.diff_keller));
+})
+    .attr("y", function (d) {
+    return y(d.id_bureau);
+})
+    .attr("width", function (d) {
+    return Math.abs(x(d.diff_keller) - x(0));
+})
+    .attr("height", y.rangeBand());
+
+svg2.append("g")
+    .attr("class", "x axis")
+    .call(xAxis);
+
+svg2.append("g")
+    .attr("class", "y axis")
+    .append("line")
+    .attr("x1", x(0))
+    .attr("x2", x(0))
+    .attr("y2", height2);
+
+// on continue gaîment avec l'affichage des zones
+
+  svg.append("g").attr("class","zones")
+        .selectAll("path")
+        .data(bureaux.features)
+        .enter()
+          .append("path")
+          .attr("class", "bureau")
+          .attr("d", path)
+          .attr("fill", function(d,i){
+              if (progression[i].diff_ries<-17.59){
+            return couleurs[0]
+          }
+          else if (progression[i].diff_ries<-15.02){
+            return couleurs[1]
+          }
+           else if (progression[i].diff_ries<-12.52){
+            return couleurs[2]
+          }
+           else if (progression[i].diff_ries<-10.37){
+            return couleurs[3]
+          }
+           else if (progression[i].diff_ries<-8.86){
+            return couleurs[4]
+          }
+          else {return couleurs[5]
+          }
+        })
+        .on('mouseover', function(d, i) {
+          // on définit en variable l'id du bureau qui va permettra de souligner la bonne lign de l'histogramme
+          var id = progression[i].id_bureau
+          // c'est là que la classe commune "bar" a toute son utilité
+          svg2.selectAll(".bar").style("opacity", function(d) {
+            return d.id_bureau == id ? 1 : 0.5;
+          });
+          tip.show(d,i);
+        })
+        .on('mouseout',  function(d, i) {
+          // quand la souris quitte la zone, on remet simplement l'opacité de la classe "bar" à 1
+          svg2.selectAll(".bar").style("opacity", 1);
+          tip.hide(d,i);
+        });
+
+// plus qu'à bricoler la légende et le tour est joué
+
+    svg3.append("g")
+      .append("text")
+      .attr("x", 30)
+      .attr("y", 22)
+      .attr("font-size", 11)
+      .attr("font-family","Arial")
+      .text("En mars 2014, Roland Ries a perdu dans ce bureau :")
+
+    svg3.append("g").attr("class", "legende")
+      .selectAll("rect")
+      .data(["Plus de 18%", "15% à 18%", "13% à 15%","10% à 13%","9% à 10%","Moins de 9%"])
+      .enter()
+      .append("rect")
+      .attr("x", function(d,i){
+          return 30+i*63
+      })
+      .attr("y", 40)
+      .attr("fill", function(d){
+        if (d == "Plus de 18%"){
+            return couleurs[0]
+          }
+          else if (d == "15% à 18%"){
+           return couleurs[1]
+          }
+          else if (d == "13% à 15%"){
+           return couleurs[2]
+         } else if (d == "10% à 13%"){
+           return couleurs[3]
+         }
+          else if (d == "9% à 10%"){
+           return couleurs[4]
+         }
+          else if (d == "Moins de 9%"){
+           return couleurs[5]
+         }
+      })
+      .attr("width", 50)
+      .attr("height", 12)
+
+    svg3.append("g").attr("class", "legende")
+      .selectAll("text")
+      .data(["Plus de 18%", "15% à 18%", "13% à 15%","10% à 13%","9% à 10%","Moins de 9%"])
+      .enter()
+      .append("text")
+      .attr("x", function(d,i){
+          return 27+i*64
+      })
+      .attr("y", 69)
+      .attr("font-family","Arial")
+      .attr("font-size", 10.1)
+      .text(function(d){return d})
+
+    svg3.append("g")
+      .append("text")
+      .attr("x", 30)
+      .attr("y", 90)
+      .attr("font-size", 10)
+      .attr("font-family","Arial")
+      .text("(Les barres bleues correspondent aux résultats de Fabienne Keller.")
+
+    svg3.append("g")
+      .append("text")
+      .attr("x", 30)
+      .attr("y", 108)
+      .attr("font-size", 10)
+      .attr("font-family","Arial")
+      .text("Les classes de cette carte sont définies selon la méthode des quantiles.")
+
+    svg3.append("g")
+      .append("text")
+      .attr("x", 30)
+      .attr("y", 125)
+      .attr("font-size", 10)
+      .attr("font-family","Arial")
+      .text("Les pourcentages de la légende ont été arrondis pour plus de clarté.)")
+
+};
+
+</script>
+
+</body>
