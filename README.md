@@ -1,4 +1,4 @@
-Carte et histogramme de la distribution sur D3js
+Carte avec histogramme de distribution sur D3js
 =========================
 
 Tout ce qu'il faut pour créer une carte couplée à un histogramme de la distribution. On se sert pour cela d'un topojson (fond de carte), d'un geojson (zones interactives) et d'un csv (données à relier au geojson). Le tout est lié grâce à la librairie D3js (http://d3js.org/).
